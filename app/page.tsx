@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const STREAM_URL = "http://c4.siar.us:8092/live";
-const ICECAST = "http://c4.siar.us:8092/status-json.xsl";
+const STREAM_URL = "https://c4.siar.us:8092/live";
+const ICECAST = "https://c4.siar.us:8092/status-json.xsl";
 
 const DEFAULT_COVER = "/logo_radio_sehati.png";
 

@@ -6,9 +6,6 @@ const STREAM_URL = "http://c4.siar.us:8092/live";
 const ICECAST = "http://c4.siar.us:8092/status-json.xsl";
 
 const DEFAULT_COVER = "/logo_radio_sehati.png";
-const [cover, setCover] = useState(DEFAULT_COVER);
-
-const isLongTitle = title.length > 35;
 
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -22,7 +19,8 @@ export default function Home() {
 
   const [cover, setCover] = useState(DEFAULT_COVER);
 
-  // PLAY / PAUSE
+  const isLongTitle = title.length > 35;
+
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -47,26 +45,25 @@ export default function Home() {
     }
   };
 
-  // COVER ART
-  const fetchCover = async (a: string, t: string) => {
+  const fetchCover = async (artistName: string, songTitle: string) => {
     try {
-      if (!a || a === "-") {
+      if (!artistName || artistName === "-") {
         setCover(DEFAULT_COVER);
         return;
       }
 
       const res = await fetch(
         `https://itunes.apple.com/search?term=${encodeURIComponent(
-          `${a} ${t}`
+          `${artistName} ${songTitle}`
         )}&entity=song&limit=1`
       );
 
       const data = await res.json();
 
-      const img = data?.results?.[0]?.artworkUrl100;
+      const artwork = data?.results?.[0]?.artworkUrl100;
 
-      if (img) {
-        setCover(img.replace("100x100", "600x600"));
+      if (artwork) {
+        setCover(artwork.replace("100x100", "600x600"));
       } else {
         setCover(DEFAULT_COVER);
       }
@@ -75,7 +72,6 @@ export default function Home() {
     }
   };
 
-  // ICECAST META
   const fetchMeta = async () => {
     try {
       const res = await fetch(ICECAST);
@@ -84,7 +80,7 @@ export default function Home() {
       const source = data?.icestats?.source;
 
       const live = Array.isArray(source)
-        ? source.find((s: any) => s?.listenurl)
+        ? source.find((s: any) => s?.listenurl) || source[0]
         : source;
 
       const raw =
@@ -92,8 +88,8 @@ export default function Home() {
         live?.yp_currently_playing ||
         "Radio Sehati";
 
-      let art = "-";
-      let song = raw;
+      let artistName = "-";
+      let songTitle = raw;
 
       if (
         typeof raw === "string" &&
@@ -101,15 +97,15 @@ export default function Home() {
       ) {
         const parts = raw.split(" - ");
 
-        art = parts[0]?.trim();
-        song = parts.slice(1).join(" - ").trim();
+        artistName = parts[0]?.trim();
+        songTitle = parts.slice(1).join(" - ").trim();
       }
 
-      setArtist(art);
-      setTitle(song);
-      setListeners(live?.listeners ?? 0);
+      setArtist(artistName);
+      setTitle(songTitle);
+      setListeners(Number(live?.listeners ?? 0));
 
-      fetchCover(art, song);
+      fetchCover(artistName, songTitle);
     } catch (err) {
       console.log("ICECAST ERROR:", err);
 
@@ -123,22 +119,16 @@ export default function Home() {
   useEffect(() => {
     fetchMeta();
 
-    const interval = setInterval(
-      fetchMeta,
-      10000
-    );
+    const interval = setInterval(fetchMeta, 10000);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-200 via-yellow-200 to-amber-100 text-neutral-900 px-4">
-
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/25" />
 
       <div className="relative w-full max-w-md">
-
         <div className="bg-white/55 backdrop-blur-xl border border-white/40 rounded-3xl p-8 shadow-xl text-center">
 
           <h1 className="text-2xl font-semibold tracking-wide">
@@ -149,21 +139,18 @@ export default function Home() {
             Guyub Rukun Forever
           </p>
 
-          {/* COVER */}
           <div className="flex justify-center my-6">
             <img
               src={cover}
               alt="Album Cover"
               className="w-56 h-56 rounded-2xl object-cover shadow-lg border border-white/40"
               onError={(e) => {
-                (
-                  e.target as HTMLImageElement
-                ).src = DEFAULT_COVER;
+                (e.target as HTMLImageElement).src =
+                  DEFAULT_COVER;
               }}
             />
           </div>
 
-          {/* STATUS */}
           <span
             className={`px-4 py-1 rounded-full text-xs font-medium ${
               playing
@@ -174,53 +161,46 @@ export default function Home() {
             {playing ? "LIVE ON AIR" : "OFF AIR"}
           </span>
 
-          {/* NOW PLAYING */}
-      <div className="mt-6 bg-white/50 rounded-2xl p-4 border border-white/40">
+          <div className="mt-6 bg-white/50 rounded-2xl p-4 border border-white/40">
 
-  {isLongTitle ? (
-    <div className="overflow-hidden whitespace-nowrap">
-      <div className="marquee-track">
-        <span className="text-lg font-semibold text-amber-700">
-          {title}
-        </span>
+            {isLongTitle ? (
+              <div className="overflow-hidden whitespace-nowrap">
+                <div className="marquee-track">
+                  <span className="text-lg font-semibold text-amber-700">
+                    {title}
+                  </span>
 
-        <span
-          className="text-lg font-semibold text-amber-700"
-          aria-hidden="true"
-        >
-          {title}
-        </span>
-      </div>
-    </div>
-  ) : (
-    <p className="text-lg font-semibold text-amber-700">
-      {title}
-    </p>
-  )}
+                  <span
+                    className="text-lg font-semibold text-amber-700"
+                    aria-hidden="true"
+                  >
+                    {title}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg font-semibold text-amber-700">
+                {title}
+              </p>
+            )}
 
-  <p className="text-sm text-neutral-700 mt-2 truncate">
-    {artist}
-  </p>
+            <p className="text-sm text-neutral-700 mt-2 truncate">
+              {artist}
+            </p>
 
-  <p className="text-xs text-neutral-500 mt-2">
-    👥 {listeners} listeners
-  </p>
-
-</div>
+            <p className="text-xs text-neutral-500 mt-2">
+              👥 {listeners} listeners
+            </p>
 
           </div>
 
-          {/* BUTTON */}
           <button
             onClick={toggle}
             className="mt-6 w-full py-3 rounded-xl font-semibold transition active:scale-95 shadow-lg bg-amber-500 text-white hover:bg-amber-600"
           >
-            {playing
-              ? "Pause Radio"
-              : "Play Radio"}
+            {playing ? "Pause Radio" : "Play Radio"}
           </button>
 
-          {/* BUFFERING */}
           {buffering && (
             <p className="text-xs mt-3 text-amber-700">
               Connecting stream...
@@ -228,13 +208,12 @@ export default function Home() {
           )}
 
           <p className="mt-5 text-xs text-neutral-500">
-            @2026 @aakasep
+            © 2026 Radio Sehati
           </p>
 
         </div>
       </div>
 
-      {/* AUDIO */}
       <audio
         ref={audioRef}
         src={STREAM_URL}
