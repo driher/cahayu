@@ -19,6 +19,8 @@ export default function Home() {
 
   const [cover, setCover] = useState(DEFAULT_COVER);
 
+  const isLongTitle = title.length > 35;
+
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -27,7 +29,7 @@ export default function Home() {
       if (!playing) {
         setBuffering(true);
 
-        audio.volume = 1;
+        audio.load();
         await audio.play();
 
         setPlaying(true);
@@ -58,10 +60,10 @@ export default function Home() {
 
       const data = await res.json();
 
-      const img = data?.results?.[0]?.artworkUrl100;
+      const artwork = data?.results?.[0]?.artworkUrl100;
 
-      if (img) {
-        setCover(img.replace("100x100", "600x600"));
+      if (artwork) {
+        setCover(artwork.replace("100x100", "600x600"));
       } else {
         setCover(DEFAULT_COVER);
       }
@@ -78,7 +80,7 @@ export default function Home() {
       const source = data?.icestats?.source;
 
       const live = Array.isArray(source)
-        ? source.find((s: any) => s?.listenurl)
+        ? source.find((s: any) => s?.listenurl) || source[0]
         : source;
 
       const raw =
@@ -89,22 +91,27 @@ export default function Home() {
       let artistName = "-";
       let songTitle = raw;
 
-      if (typeof raw === "string" && raw.includes(" - ")) {
+      if (
+        typeof raw === "string" &&
+        raw.includes(" - ")
+      ) {
         const parts = raw.split(" - ");
+
         artistName = parts[0]?.trim();
         songTitle = parts.slice(1).join(" - ").trim();
       }
 
       setArtist(artistName);
       setTitle(songTitle);
-      setListeners(live?.listeners ?? 0);
+      setListeners(Number(live?.listeners ?? 0));
 
       fetchCover(artistName, songTitle);
     } catch (err) {
       console.log("ICECAST ERROR:", err);
 
-      setTitle("Radio Sehati");
       setArtist("-");
+      setTitle("Radio Sehati");
+      setListeners(0);
       setCover(DEFAULT_COVER);
     }
   };
@@ -119,26 +126,24 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-200 via-yellow-200 to-amber-100 text-neutral-900 px-4">
-
-      <div className="absolute inset-0 bg-black/20" />
+      <div className="absolute inset-0 bg-black/25" />
 
       <div className="relative w-full max-w-md">
+        <div className="bg-white/55 backdrop-blur-xl border border-white/40 rounded-3xl p-8 shadow-xl text-center">
 
-        <div className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-8 shadow-2xl text-center">
-
-          <h1 className="text-2xl font-bold text-amber-700">
+          <h1 className="text-2xl font-semibold tracking-wide">
             Radio Streaming Sehati
           </h1>
 
           <p className="text-xs text-neutral-600 mt-1">
-            Live Audio Broadcast
+            Guyub Rukun Forever
           </p>
 
           <div className="flex justify-center my-6">
             <img
               src={cover}
               alt="Album Cover"
-              className="w-56 h-56 rounded-2xl object-cover shadow-xl border border-white/40"
+              className="w-56 h-56 rounded-2xl object-cover shadow-lg border border-white/40"
               onError={(e) => {
                 (e.target as HTMLImageElement).src =
                   DEFAULT_COVER;
@@ -147,22 +152,39 @@ export default function Home() {
           </div>
 
           <span
-            className={`inline-block px-4 py-1 rounded-full text-xs font-semibold ${
+            className={`px-4 py-1 rounded-full text-xs font-medium ${
               playing
-                ? "bg-red-500 text-white"
-                : "bg-white text-neutral-700"
+                ? "bg-amber-500 text-white"
+                : "bg-white/70 text-neutral-600"
             }`}
           >
-            {playing ? "🔴 LIVE ON AIR" : "⚪ OFF AIR"}
+            {playing ? "LIVE ON AIR" : "OFF AIR"}
           </span>
 
-          <div className="mt-6 bg-white/60 rounded-2xl p-4 border border-white/30">
+          <div className="mt-6 bg-white/50 rounded-2xl p-4 border border-white/40">
 
-            <p className="text-lg font-bold text-amber-700 truncate">
-              {title}
-            </p>
+            {isLongTitle ? (
+              <div className="overflow-hidden whitespace-nowrap">
+                <div className="marquee-track">
+                  <span className="text-lg font-semibold text-amber-700">
+                    {title}
+                  </span>
 
-            <p className="text-sm text-neutral-700 mt-1 truncate">
+                  <span
+                    className="text-lg font-semibold text-amber-700"
+                    aria-hidden="true"
+                  >
+                    {title}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-lg font-semibold text-amber-700">
+                {title}
+              </p>
+            )}
+
+            <p className="text-sm text-neutral-700 mt-2 truncate">
               {artist}
             </p>
 
@@ -174,19 +196,19 @@ export default function Home() {
 
           <button
             onClick={toggle}
-            className="mt-6 w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-lg transition active:scale-95"
+            className="mt-6 w-full py-3 rounded-xl font-semibold transition active:scale-95 shadow-lg bg-amber-500 text-white hover:bg-amber-600"
           >
-            {playing ? "⏸ Pause Radio" : "▶ Play Radio"}
+            {playing ? "Pause Radio" : "Play Radio"}
           </button>
 
           {buffering && (
-            <p className="text-xs text-amber-700 mt-3">
+            <p className="text-xs mt-3 text-amber-700">
               Connecting stream...
             </p>
           )}
 
           <p className="mt-5 text-xs text-neutral-500">
-            Icecast AutoDJ • Radio Sehati
+            © 2026 Radio Sehati
           </p>
 
         </div>
@@ -206,8 +228,7 @@ export default function Home() {
         onPause={() => {
           setPlaying(false);
         }}
-        onError={(e) => {
-          console.log("AUDIO ERROR:", e);
+        onError={() => {
           setPlaying(false);
           setBuffering(false);
         }}

@@ -5,6 +5,11 @@ import { useEffect, useRef, useState } from "react";
 const STREAM_URL = "http://c4.siar.us:8092/live";
 const ICECAST = "http://c4.siar.us:8092/status-json.xsl";
 
+const DEFAULT_COVER = "/logo_radio_sehati.png";
+const [cover, setCover] = useState(DEFAULT_COVER);
+
+const isLongTitle = title.length > 35;
+
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -15,9 +20,9 @@ export default function Home() {
   const [artist, setArtist] = useState("-");
   const [listeners, setListeners] = useState(0);
 
-  const [cover, setCover] = useState("/cover.jpg");
+  const [cover, setCover] = useState(DEFAULT_COVER);
 
-  // ▶️ PLAY / PAUSE
+  // PLAY / PAUSE
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -26,7 +31,7 @@ export default function Home() {
       if (!playing) {
         setBuffering(true);
 
-        audio.load(); // penting untuk stabil di beberapa browser
+        audio.load();
         await audio.play();
 
         setPlaying(true);
@@ -42,30 +47,35 @@ export default function Home() {
     }
   };
 
-  // 🖼️ COVER (safe version)
+  // COVER ART
   const fetchCover = async (a: string, t: string) => {
     try {
-      if (!a || a === "-") return;
+      if (!a || a === "-") {
+        setCover(DEFAULT_COVER);
+        return;
+      }
 
       const res = await fetch(
         `https://itunes.apple.com/search?term=${encodeURIComponent(
-          a + " " + t
+          `${a} ${t}`
         )}&entity=song&limit=1`
       );
 
       const data = await res.json();
+
       const img = data?.results?.[0]?.artworkUrl100;
 
       if (img) {
-        const highRes = img.replace("100x100", "600x600");
-        setCover(highRes);
+        setCover(img.replace("100x100", "600x600"));
+      } else {
+        setCover(DEFAULT_COVER);
       }
     } catch {
-      // fallback diam, jangan spam state
+      setCover(DEFAULT_COVER);
     }
   };
 
-  // 📡 ICECAST META (SAFE PARSER)
+  // ICECAST META
   const fetchMeta = async () => {
     try {
       const res = await fetch(ICECAST);
@@ -85,8 +95,12 @@ export default function Home() {
       let art = "-";
       let song = raw;
 
-      if (typeof raw === "string" && raw.includes(" - ")) {
+      if (
+        typeof raw === "string" &&
+        raw.includes(" - ")
+      ) {
         const parts = raw.split(" - ");
+
         art = parts[0]?.trim();
         song = parts.slice(1).join(" - ").trim();
       }
@@ -98,19 +112,29 @@ export default function Home() {
       fetchCover(art, song);
     } catch (err) {
       console.log("ICECAST ERROR:", err);
+
+      setArtist("-");
+      setTitle("Radio Sehati");
+      setListeners(0);
+      setCover(DEFAULT_COVER);
     }
   };
 
   useEffect(() => {
     fetchMeta();
-    const interval = setInterval(fetchMeta, 10000);
+
+    const interval = setInterval(
+      fetchMeta,
+      10000
+    );
+
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-amber-200 via-yellow-200 to-amber-100 text-neutral-900 px-4">
 
-      {/* overlay */}
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/25" />
 
       <div className="relative w-full max-w-md">
@@ -122,17 +146,19 @@ export default function Home() {
           </h1>
 
           <p className="text-xs text-neutral-600 mt-1">
-            Live Audio Broadcast
+            Guyub Rukun Forever
           </p>
 
           {/* COVER */}
           <div className="flex justify-center my-6">
             <img
               src={cover}
-              alt="cover"
+              alt="Album Cover"
               className="w-56 h-56 rounded-2xl object-cover shadow-lg border border-white/40"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = "/cover.jpg";
+                (
+                  e.target as HTMLImageElement
+                ).src = DEFAULT_COVER;
               }}
             />
           </div>
@@ -149,18 +175,39 @@ export default function Home() {
           </span>
 
           {/* NOW PLAYING */}
-          <div className="mt-6 bg-white/50 rounded-2xl p-4 border border-white/40">
-            <p className="text-lg font-semibold text-amber-700 truncate">
-              {title}
-            </p>
+      <div className="mt-6 bg-white/50 rounded-2xl p-4 border border-white/40">
 
-            <p className="text-sm text-neutral-700 mt-1">
-              {artist}
-            </p>
+  {isLongTitle ? (
+    <div className="overflow-hidden whitespace-nowrap">
+      <div className="marquee-track">
+        <span className="text-lg font-semibold text-amber-700">
+          {title}
+        </span>
 
-            <p className="text-xs text-neutral-500 mt-2">
-              {listeners} listeners
-            </p>
+        <span
+          className="text-lg font-semibold text-amber-700"
+          aria-hidden="true"
+        >
+          {title}
+        </span>
+      </div>
+    </div>
+  ) : (
+    <p className="text-lg font-semibold text-amber-700">
+      {title}
+    </p>
+  )}
+
+  <p className="text-sm text-neutral-700 mt-2 truncate">
+    {artist}
+  </p>
+
+  <p className="text-xs text-neutral-500 mt-2">
+    👥 {listeners} listeners
+  </p>
+
+</div>
+
           </div>
 
           {/* BUTTON */}
@@ -168,10 +215,12 @@ export default function Home() {
             onClick={toggle}
             className="mt-6 w-full py-3 rounded-xl font-semibold transition active:scale-95 shadow-lg bg-amber-500 text-white hover:bg-amber-600"
           >
-            {playing ? "Pause Radio" : "Play Radio"}
+            {playing
+              ? "Pause Radio"
+              : "Play Radio"}
           </button>
 
-          {/* BUFFER */}
+          {/* BUFFERING */}
           {buffering && (
             <p className="text-xs mt-3 text-amber-700">
               Connecting stream...
@@ -179,14 +228,32 @@ export default function Home() {
           )}
 
           <p className="mt-5 text-xs text-neutral-500">
-            Icecast AutoDJ • Radio Sehati
+            @2026 @aakasep
           </p>
 
         </div>
       </div>
 
       {/* AUDIO */}
-      <audio ref={audioRef} src={STREAM_URL} preload="none" />
+      <audio
+        ref={audioRef}
+        src={STREAM_URL}
+        preload="none"
+        onPlaying={() => {
+          setPlaying(true);
+          setBuffering(false);
+        }}
+        onWaiting={() => {
+          setBuffering(true);
+        }}
+        onPause={() => {
+          setPlaying(false);
+        }}
+        onError={() => {
+          setPlaying(false);
+          setBuffering(false);
+        }}
+      />
     </div>
   );
 }

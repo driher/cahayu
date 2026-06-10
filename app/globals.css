@@ -33,3 +33,22 @@ body {
 .animate-spin-slow {
   animation: spin-slow 6s linear infinite;
 }
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 5rem;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 18s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-50% - 2.5rem));
+  }
+}
