@@ -210,11 +210,11 @@ di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
           <div className="bg-white/55 backdrop-blur-xl border border-white/40 rounded-3xl p-8 shadow-xl text-center">
 
             <h1 className="text-2xl font-semibold">
-              Radio Sehati
+              Radio Streaming Sehati
             </h1>
 
             <p className="text-xs text-neutral-600 mt-1">
-              Guyub Rukun Forever
+              Guyub Rukun Forever..!
             </p>
 
             {/* COVER */}
