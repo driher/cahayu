@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.radiosehati.app",
+      "sha256_cert_fingerprints": [
+        "AC:EF:FB:F2:37:24:46:25:08:83:DA:62:3C:BD:CA:49:9F:C7:31:DD:E5:18:67:5B:08:1C:0C:57:FF:85:24:E4"
+      ]
+    }
+  }
+]

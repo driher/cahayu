@@ -83,18 +83,35 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
-.marquee-track {
-  display: inline-flex;
-  gap: 4rem;
-  min-width: max-content;
-  animation: marquee 15s linear infinite;
+.marquee-pro {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee-pro linear infinite;
 }
 
-@keyframes marquee {
-  from {
-    transform: translateX(0);
+@keyframes marquee-pro {
+  0% {
+    transform: translateX(100%);
   }
-  to {
-    transform: translateX(-50%);
+  100% {
+    transform: translateX(-100%);
   }
+}
+
+/* Fade kiri-kanan ala Spotify */
+.marquee-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
 }
