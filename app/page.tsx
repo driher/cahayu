@@ -12,7 +12,7 @@ export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // =========================
-  // SPLASH CONTROL (ANTI LOOP)
+  // SPLASH ANTI LOOP LOCK
   // =========================
   const [splashDone, setSplashDone] = useState(false);
   const splashLocked = useRef(false);
@@ -30,7 +30,7 @@ export default function Home() {
   const isLongTitle = title.length > 35;
 
   // =========================
-  // SPLASH FIX (NO LOOP)
+  // SPLASH CONTROL (FIX LOOP)
   // =========================
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -82,9 +82,9 @@ export default function Home() {
   // =========================
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(
-      `🎧 Saya sedang mendengarkan ${title} - ${artist}
-📻 Radio Sehati Live Stream
-🔊 https://radiosehati.com`
+      `🎧 Sedang mendengarkan ${title} - ${artist}
+📻 Radio Sehati Live
+🔊 ${WEBSITE_URL}`
     );
 
     window.open(`https://wa.me/?text=${text}`, "_blank");
@@ -98,6 +98,24 @@ export default function Home() {
   };
 
   // =========================
+  // SMART CLEAN FUNCTION
+  // =========================
+  const cleanArtist = (text: string) => {
+    return (text || "-")
+      .replace(/^\d+\s*[-.)]?\s*/g, "")
+      .replace(/\(.*?\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  const cleanTitle = (text: string) => {
+    return (text || "Radio Sehati")
+      .replace(/\(.*?\)/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
+  // =========================
   // COVER FETCH
   // =========================
   const fetchCover = async (artistName: string, songTitle: string) => {
@@ -107,16 +125,18 @@ export default function Home() {
         return;
       }
 
+      const query = encodeURIComponent(`${artistName} ${songTitle}`);
+
       const res = await fetch(
-        `https://itunes.apple.com/search?term=${encodeURIComponent(
-          `${artistName} ${songTitle}`
-        )}&entity=song&limit=1`
+        `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`
       );
 
       const data = await res.json();
       const artwork = data?.results?.[0]?.artworkUrl100;
 
-      setCover(artwork ? artwork.replace("100x100", "600x600") : DEFAULT_COVER);
+      setCover(
+        artwork ? artwork.replace("100x100", "600x600") : DEFAULT_COVER
+      );
     } catch {
       setCover(DEFAULT_COVER);
     }
@@ -150,15 +170,18 @@ export default function Home() {
         songTitle = parts.slice(1).join(" - ").trim();
       }
 
+      // =========================
+      // CLEAN SMART METADATA
+      // =========================
+      artistName = cleanArtist(artistName);
+      songTitle = cleanTitle(songTitle);
+
       setArtist(artistName);
       setTitle(songTitle);
       setListeners(Number(live?.listeners ?? 0));
 
       fetchCover(artistName, songTitle);
 
-      // =========================
-      // LOCK ONLY ONCE (ANTI LOOP)
-      // =========================
       if (!splashLocked.current) {
         splashLocked.current = true;
         setSplashDone(true);
@@ -183,7 +206,7 @@ export default function Home() {
   }, []);
 
   // =========================
-  // RENDER
+  // UI
   // =========================
   return (
     <>
@@ -213,7 +236,6 @@ export default function Home() {
                 src={cover}
                 className="absolute w-64 h-64 object-cover blur-3xl opacity-30"
               />
-
               <img
                 src={cover}
                 className="relative w-56 h-56 rounded-2xl object-cover shadow-lg border border-white/40"
@@ -245,7 +267,7 @@ export default function Home() {
               </p>
             </div>
 
-            {/* PLAY BUTTON */}
+            {/* PLAY */}
             <div className="flex justify-center mt-6">
               <button
                 onClick={toggle}
