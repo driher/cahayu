@@ -90,6 +90,17 @@ di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
     window.open(WEBSITE_URL, "_blank", "noopener,noreferrer");
   };
 
+  const openWhatsApp = () => {
+  const text = encodeURIComponent(
+    "Halo Radio Streaming Sehati"
+  );
+
+  window.open(
+    `https://wa.me/628882282008?text=${text}`,
+    "_blank"
+  );
+};
+
   // ======================
   // CLEAN FOR COVER SEARCH
   // ======================
@@ -317,6 +328,43 @@ di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
 
           </div>
         </div>
+{/* Floating WhatsApp */}
+<button
+  onClick={openWhatsApp}
+  className="
+    fixed
+    bottom-6
+    right-6
+    z-50
+    w-16
+    h-16
+    rounded-full
+    bg-green-500
+    text-white
+    flex
+    items-center
+    justify-center
+    shadow-xl
+    hover:scale-110
+    active:scale-95
+    transition-all
+    duration-300
+  "
+  aria-label="WhatsApp Radio Sehati"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 32 32"
+    className="w-8 h-8 fill-current"
+  >
+    <path d="M16.04 4C9.39 4 4 9.28 4 15.79c0 2.29.67 4.42 1.82 6.22L4 28l6.18-1.62a12.2 12.2 0 0 0 5.86 1.49C22.69 27.87 28 22.59 28 16.08S22.69 4 16.04 4zm6.92 17.15c-.29.81-1.68 1.55-2.32 1.65-.6.09-1.36.13-2.19-.13-.5-.15-1.15-.37-1.98-.72-3.48-1.47-5.75-4.91-5.92-5.14-.16-.23-1.41-1.84-1.41-3.5 0-1.65.88-2.47 1.19-2.81.31-.34.68-.42.9-.42h.65c.21 0 .5-.08.77.57.29.7.98 2.42 1.06 2.6.09.18.15.39.03.62-.12.23-.18.38-.35.58-.17.2-.36.44-.51.59-.17.17-.34.35-.15.69.18.34.82 1.33 1.76 2.16 1.22 1.08 2.24 1.42 2.57 1.58.34.17.54.14.74-.08.2-.23.87-.99 1.1-1.33.23-.34.46-.28.77-.17.31.11 1.98.92 2.32 1.08.34.17.57.25.65.39.08.13.08.78-.21 1.59z"/>
+  </svg>
+
+  <span className="absolute -top-1 -right-1 flex h-4 w-4">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-4 w-4 bg-green-200"></span>
+  </span>
+</button>
 
         <audio
           ref={audioRef}
