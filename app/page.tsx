@@ -432,6 +432,7 @@ return (
 
     </button>
           <audio
+	  suppressHydrationWarning
         ref={audioRef}
         src={STREAM_URL}
         preload="none"
