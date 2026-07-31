@@ -19,6 +19,28 @@
   }
 }
 
+
+html{
+
+background:#08111f;
+
+}
+
+body{
+
+margin:0;
+
+padding:0;
+
+background:#08111f;
+
+overflow-x:hidden;
+
+font-family:
+system-ui,sans-serif;
+
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

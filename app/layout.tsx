@@ -1,50 +1,81 @@
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
+import RegisterSW from "@/components/RegisterSW";
 
 export const metadata: Metadata = {
-  title: "Streaming Sehati Apps",
-  description: "Aplikasi Streaming Radio Sehati, Guyub Rukun Forever",
-  manifest: "/manifest.json",
+
+  title: {
+
+    default: "Radio Cahayu",
+
+    template: "%s | Radio Cahayu",
+
+  },
+
+  description:
+    "Streaming Radio Cahayu",
+
+  applicationName:
+    "Radio Cahayu",
+
+  appleWebApp: {
+
+    capable: true,
+
+    statusBarStyle:
+      "black-translucent",
+
+    title: "Radio Cahayu",
+
+  },
+
+  icons: {
+
+    icon: "/icons/icon-192.png",
+
+    apple:
+      "/icons/icon-192.png",
+
+    shortcut:
+      "/icons/icon-192.png",
+
+  },
+
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f59e0b",
+
+  themeColor: "#f97316",
+
   width: "device-width",
+
   initialScale: 1,
+
 };
 
 export default function RootLayout({
+
   children,
+
 }: {
+
   children: React.ReactNode;
+
 }) {
+
   return (
+
     <html lang="id">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
 
-        {/* Google Analytics */}
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-9GJVMSWPG0"
-          strategy="afterInteractive"
-        />
+      <body>
 
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
+        {children}
 
-            function gtag(){
-              dataLayer.push(arguments);
-            }
+<RegisterSW />
+      </body>
 
-            gtag('js', new Date());
-            gtag('config', 'G-9GJVMSWPG0');
-          `}
-        </Script>
-      </head>
-
-      <body>{children}</body>
     </html>
+
   );
+
 }

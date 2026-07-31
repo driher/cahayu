@@ -1,0 +1,82 @@
+import { MetadataRoute } from "next";
+
+export default function manifest(): MetadataRoute.Manifest {
+
+  return {
+
+    id: "/",
+
+    name: "Radio Cahayu",
+
+    short_name: "Cahayu",
+
+    description:
+      "Streaming Radio Cahayu",
+
+    start_url: "/",
+
+    scope: "/",
+
+    display: "standalone",
+
+    orientation: "portrait",
+
+    background_color: "#08111f",
+
+    theme_color: "#f97316",
+
+    lang: "id",
+
+    categories: [
+      "music",
+      "radio",
+      "entertainment"
+    ],
+
+    icons: [
+
+      {
+        src: "/icons/icon-192.png",
+        sizes: "192x192",
+        type: "image/png"
+      },
+
+      {
+        src: "/icons/icon-512.png",
+        sizes: "512x512",
+        type: "image/png"
+      },
+
+      {
+        src: "/icons/maskable-512.png",
+        sizes: "512x512",
+        purpose: "maskable",
+        type: "image/png"
+      }
+
+    ],
+
+    shortcuts: [
+
+      {
+
+        name: "Play Radio",
+
+        short_name: "Play",
+
+        url: "/",
+
+        icons: [
+          {
+            src: "/icons/icon-192.png",
+            sizes: "192x192"
+          }
+        ]
+
+      }
+
+    ]
+
+  };
+
+}
