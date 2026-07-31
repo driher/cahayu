@@ -1,12 +1,11 @@
 [
   {
-"relation": ["delegate_permission/common.handle_all_urls"],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.app.rss",
-      "sha256_cert_fingerprints": [
-        "AC:EF:FB:F2:37:24:46:25:08:83:DA:62:3C:BD:CA:49:9F:C7:31:DD:E5:18:67:5B:08:1C:0C:57:FF:85:24:E4"
-      ]
+      "package_name": "app.radio.cahayu",
+      "sha256_cert_fingerprints":
+        ["24:EF:3A:8A:25:E9:64:B0:36:CA:49:EB:C0:A0:56:7D:5F:07:3C:E0:7C:77:E4:94:4C:62:FF:41:32:10:78:09"]
     }
   }
 ]
