@@ -63,9 +63,7 @@ export default function Home() {
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(
       `Saya sedang mendengarkan "${title}" - ${artist}
-
-Dengarkan Radio Cahayu di:
-
+Dengarkan Radio Cahayu download sekarang di: https://play.google.com/store/apps/details?id=app.radio.cahayu atau klik
 ${WEBSITE_URL}`
     );
 
@@ -302,7 +300,7 @@ return (
 
             <div className="bg-gray-300 text-gray-700 px-5 py-2 rounded-full">
 
-              OFF AIR
+              KLIK PLAY
 
             </div>
 
