@@ -1,55 +1,39 @@
 "use client";
 
-import SplashScreen from "@/components/SplashScreen";
 import { useEffect, useRef, useState } from "react";
 
-const STREAM_URL = "https://c4.siar.us:8092/live";
-const ICECAST = "https://c4.siar.us:8092/status-json.xsl";
-const DEFAULT_COVER = "/logo_radio_sehati.png";
-const WEBSITE_URL = "https://radiosehati.com";
+const STREAM_URL = "https://c4.siar.us:8099/live";
+const ICECAST = "https://c4.siar.us:8099/status-json.xsl";
+const DEFAULT_COVER = "/logo_radio_cahayu.png";
+const WEBSITE_URL = "https://mediacahayu.com";
 
 export default function Home() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const splashLock = useRef(false);
-
-  const [splashDone, setSplashDone] = useState(false);
 
   const [playing, setPlaying] = useState(false);
   const [buffering, setBuffering] = useState(false);
 
-  const [title, setTitle] = useState("Radio Sehati");
+  const [title, setTitle] = useState("Radio Cahayu");
   const [artist, setArtist] = useState("-");
-
   const [listeners, setListeners] = useState(0);
+
   const [volume, setVolume] = useState(80);
   const [cover, setCover] = useState(DEFAULT_COVER);
 
-  // ======================
-  // SPLASH ANTI LOOP FIX
-  // ======================
-  useEffect(() => {
-    const t = setTimeout(() => {
-      if (!splashLock.current) {
-        splashLock.current = true;
-        setSplashDone(true);
-      }
-    }, 1800);
+  // ===========================
+  // VOLUME
+  // ===========================
 
-    return () => clearTimeout(t);
-  }, []);
-
-  // ======================
-  // VOLUME CONTROL
-  // ======================
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
   }, [volume]);
 
-  // ======================
-  // PLAY CONTROL
-  // ======================
+  // ===========================
+  // PLAY / PAUSE
+  // ===========================
+
   const toggle = async () => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -64,84 +48,120 @@ export default function Home() {
         audio.pause();
         setPlaying(false);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setPlaying(false);
     } finally {
       setBuffering(false);
     }
   };
 
-  // ======================
-  // SHARE WA
-  // ======================
+  // ===========================
+  // SHARE WHATSAPP
+  // ===========================
+
   const shareToWhatsApp = () => {
     const text = encodeURIComponent(
-      `Saya sedang mendengarkan ${title} - ${artist}
-di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
+      `Saya sedang mendengarkan "${title}" - ${artist}
+
+Dengarkan Radio Cahayu di:
+
+${WEBSITE_URL}`
     );
 
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+    window.open(
+      `https://wa.me/?text=${text}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 
-  // ======================
-  // OPEN WEBSITE
-  // ======================
+  // ===========================
+  // WEBSITE
+  // ===========================
+
   const openWebsite = () => {
-    window.open(WEBSITE_URL, "_blank", "noopener,noreferrer");
+    window.open(
+      WEBSITE_URL,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
+
+  // ===========================
+  // WHATSAPP
+  // ===========================
 
   const openWhatsApp = () => {
-  const text = encodeURIComponent(
-    "Halo Radio Streaming Sehati"
-  );
+    const text = encodeURIComponent(
+      "Halo Radio Cahayu..."
+    );
 
-  window.open(
-    `https://wa.me/628882282008?text=${text}`,
-    "_blank"
-  );
-};
+    window.open(
+      `https://wa.me/628882282008?text=${text}`,
+      "_blank"
+    );
+  };
 
-  // ======================
-  // CLEAN FOR COVER SEARCH
-  // ======================
+  // ===========================
+  // CLEAN TITLE
+  // ===========================
+
   const cleanForSearch = (text: string) => {
-    return (text || "-")
+    return (text || "")
       .replace(/^\d+\s*[-.)]?\s*/g, "")
       .replace(/\(.*?\)/g, "")
+      .replace(/\[.*?\]/g, "")
       .replace(/\s+/g, " ")
       .trim();
   };
 
-  // ======================
-  // COVER FETCH
-  // ======================
-  const fetchCover = async (artistName: string, songTitle: string) => {
+  // ===========================
+  // COVER FROM ITUNES
+  // ===========================
+
+  const fetchCover = async (
+    artistName: string,
+    songTitle: string
+  ) => {
     try {
       if (!artistName || artistName === "-") {
         setCover(DEFAULT_COVER);
         return;
       }
 
-      const query = encodeURIComponent(`${artistName} ${songTitle}`);
+      const query = encodeURIComponent(
+        `${artistName} ${songTitle}`
+      );
 
       const res = await fetch(
         `https://itunes.apple.com/search?term=${query}&entity=song&limit=1`
       );
 
       const data = await res.json();
-      const artwork = data?.results?.[0]?.artworkUrl100;
 
-      setCover(
-        artwork ? artwork.replace("100x100", "600x600") : DEFAULT_COVER
-      );
+      const artwork =
+        data?.results?.[0]?.artworkUrl100;
+
+      if (artwork) {
+        setCover(
+          artwork.replace(
+            "100x100",
+            "600x600"
+          )
+        );
+      } else {
+        setCover(DEFAULT_COVER);
+      }
     } catch {
       setCover(DEFAULT_COVER);
     }
   };
 
-  // ======================
-  // FETCH METADATA
-  // ======================
+  // ===========================
+  // FETCH ICECAST METADATA
+  // ===========================
+
   const fetchMeta = async () => {
     try {
       const res = await fetch(ICECAST);
@@ -150,54 +170,63 @@ di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
       const source = data?.icestats?.source;
 
       const live = Array.isArray(source)
-        ? source.find((s: any) => s?.listenurl) || source[0]
+        ? source.find((s: any) => s.listenurl) ||
+          source[0]
         : source;
 
       const raw =
         live?.title ||
         live?.yp_currently_playing ||
-        "Radio Sehati";
+        "Radio Cahayu";
 
       let displayArtist = "-";
       let displayTitle = raw;
 
-      if (typeof raw === "string" && raw.includes(" - ")) {
+      if (
+        typeof raw === "string" &&
+        raw.includes(" - ")
+      ) {
         const parts = raw.split(" - ");
-        displayArtist = parts[0]?.trim();
-        displayTitle = parts.slice(1).join(" - ").trim();
+
+        displayArtist = parts[0].trim();
+        displayTitle = parts
+          .slice(1)
+          .join(" - ")
+          .trim();
       }
 
       setArtist(displayArtist);
       setTitle(displayTitle);
-      setListeners(Number(live?.listeners ?? 0));
+      setListeners(
+        Number(live?.listeners ?? 0)
+      );
 
-      const searchArtist = cleanForSearch(displayArtist);
-      const searchTitle = cleanForSearch(displayTitle);
-
-      fetchCover(searchArtist, searchTitle);
-
-      if (!splashLock.current) {
-        splashLock.current = true;
-        setSplashDone(true);
-      }
-    } catch {
-      if (!splashLock.current) {
-        splashLock.current = true;
-        setSplashDone(true);
-      }
+      fetchCover(
+        cleanForSearch(displayArtist),
+        cleanForSearch(displayTitle)
+      );
+    } catch (err) {
+      console.error(err);
     }
   };
 
   useEffect(() => {
     fetchMeta();
-    const i = setInterval(fetchMeta, 10000);
-    return () => clearInterval(i);
+
+    const interval = setInterval(
+      fetchMeta,
+      10000
+    );
+
+    return () => clearInterval(interval);
   }, []);
 
-  // ======================
-  // MARQUEE PRO LOGIC
-  // ======================
-  const isLong = (text: string) => text.length > 30;
+  // ===========================
+  // MARQUEE
+  // ===========================
+
+  const isLong = (text: string) =>
+    text.length > 30;
 
   const getSpeed = (text: string) => {
     if (text.length < 40) return "0s";
@@ -206,187 +235,259 @@ di Radio Streaming Sehati Live. Dengar via ${WEBSITE_URL}`
     return "7s";
   };
 
-  return (
-    <>
-      {!splashDone && <SplashScreen />}
+return (
+  <>
+  <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-sky-900 via-blue-700 to-orange-500 relative overflow-hidden">
 
-      <div
-        className={`min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-amber-200 via-yellow-200 to-amber-100 transition-opacity duration-700 ${
-          !splashDone ? "opacity-0" : "opacity-100"
-        }`}
-      >
-        <div className="absolute inset-0 bg-black/25" />
+    {/* Background Blur */}
+    <img
+      src={cover}
+      alt=""
+      className="absolute inset-0 w-full h-full object-cover blur-3xl scale-150 opacity-20"
+    />
 
-        <div className="relative w-full max-w-md">
-          <div className="bg-white/55 backdrop-blur-xl border border-white/40 rounded-3xl p-8 shadow-xl text-center">
+    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
-            <h1 className="text-2xl font-semibold">
-              Radio Streaming Sehati
-            </h1>
+    <div className="relative w-full max-w-md">
 
-            <p className="text-xs text-neutral-600 mt-1">
-              Guyub Rukun Forever..!
-            </p>
+      {/* Glass Card */}
+      <div className="rounded-[32px] bg-white/15 backdrop-blur-2xl border border-white/20 shadow-2xl p-8">
 
-            {/* COVER */}
-            <div className="relative flex justify-center my-6">
-              <img
-                src={cover}
-                className="absolute w-64 h-64 blur-3xl opacity-30 object-cover"
-              />
-              <img
-                src={cover}
-                className="relative w-56 h-56 rounded-2xl object-cover shadow-lg"
-              />
-            </div>
+        {/* Header */}
+        <div className="text-center">
 
-            {/* LIVE */}
-            <div className="flex justify-center mt-3">
-              {playing ? (
-                <div className="px-4 py-2 bg-red-500 text-white rounded-full flex items-center gap-2">
-                  <span className="w-3 h-3 bg-white rounded-full animate-ping" />
-                  LIVE
-                </div>
-              ) : (
-                <div className="px-4 py-2 bg-gray-300 rounded-full">
-                  OFF AIR
-                </div>
-              )}
-            </div>
+          <h1 className="text-3xl font-bold text-white">
+            Radio Cahayu
+          </h1>
 
-            {/* MARQUEE PRO */}
-            <div className="mt-5 bg-white/40 rounded-2xl p-4 shadow-md overflow-hidden">
+          <p className="text-blue-100 text-sm mt-1">
+            Radionya Wong Dewek..!
+          </p>
 
-              {isLong(title) ? (
-                <div
-                  className="whitespace-nowrap font-semibold text-amber-700"
-                  style={{
-                    animation: `marquee ${getSpeed(title)} linear infinite`,
-                  }}
-                >
-                  {title} • {title} • {title} • {title}
-                </div>
-              ) : (
-                <p className="font-semibold text-amber-700">
-                  {title}
-                </p>
-              )}
-
-              <p className="text-sm text-neutral-700">{artist}</p>
-
-              <p className="text-xs mt-1 text-gray-500">
-                👥 {listeners} listeners
-              </p>
-            </div>
-
-            {/* PLAY */}
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={toggle}
-                className="w-24 h-24 rounded-full bg-amber-500 text-white shadow-lg active:scale-95"
-              >
-                {playing ? "⏸" : "▶"}
-              </button>
-            </div>
-
-            {/* VOLUME */}
-            <div className="mt-5 flex items-center gap-3 px-6">
-              🔊
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-                className="flex-1 h-2 bg-gray-300 rounded-full"
-              />
-              <span className="text-xs w-8">{volume}</span>
-            </div>
-
-            {/* ACTION */}
-            <div className="flex justify-center gap-4 mt-5">
-              <button
-                onClick={shareToWhatsApp}
-                className="w-12 h-12 bg-green-500 text-white rounded-full"
-              >
-                📲
-              </button>
-
-              <button
-                onClick={openWebsite}
-                className="w-12 h-12 bg-blue-500 text-white rounded-full"
-              >
-                🌐
-              </button>
-            </div>
-
-            {buffering && (
-              <p className="text-xs mt-3 text-amber-700">
-                Connecting stream...
-              </p>
-            )}
-
-          </div>
         </div>
-{/* Floating WhatsApp */}
-<button
-  onClick={openWhatsApp}
-  className="
-    fixed
-    bottom-6
-    right-6
-    z-50
-    w-16
-    h-16
-    rounded-full
-    bg-green-500
-    text-white
-    flex
-    items-center
-    justify-center
-    shadow-xl
-    hover:scale-110
-    active:scale-95
-    transition-all
-    duration-300
-  "
-  aria-label="WhatsApp Radio Sehati"
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 32 32"
-    className="w-8 h-8 fill-current"
+
+        {/* Album Cover */}
+        <div className="relative flex justify-center mt-8">
+
+          <img
+            src={cover}
+            alt={title}
+            className="absolute w-72 h-72 object-cover rounded-full blur-3xl opacity-40 scale-125"
+          />
+
+          <img
+            src={cover}
+            alt={title}
+            className="relative w-60 h-60 rounded-3xl shadow-2xl object-cover border-4 border-white/20"
+          />
+
+        </div>
+
+        {/* LIVE */}
+        <div className="flex justify-center mt-6">
+
+          {playing ? (
+
+            <div className="flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-full shadow-lg">
+
+              <span className="w-3 h-3 rounded-full bg-white animate-ping"></span>
+
+              <span className="font-semibold tracking-wider">
+                LIVE
+              </span>
+
+            </div>
+
+          ) : (
+
+            <div className="bg-gray-300 text-gray-700 px-5 py-2 rounded-full">
+
+              OFF AIR
+
+            </div>
+
+          )}
+
+        </div>
+
+        {/* Song Info */}
+        <div className="mt-6 rounded-2xl bg-white/15 p-4 overflow-hidden text-center">
+
+          {isLong(title) ? (
+
+            <div
+              className="whitespace-nowrap font-bold text-xl text-white"
+              style={{
+                animation: `marquee ${getSpeed(title)} linear infinite`,
+              }}
+            >
+              {title} • {title} • {title}
+            </div>
+
+          ) : (
+
+            <h2 className="font-bold text-xl text-white">
+
+              {title}
+
+            </h2>
+
+          )}
+
+          <p className="text-blue-100 mt-2">
+
+            {artist}
+
+          </p>
+
+          <p className="text-sm text-white/80 mt-2">
+
+            👥 {listeners} Listeners
+
+          </p>
+
+        </div>
+
+        {/* Play */}
+        <div className="flex justify-center mt-8">
+
+          <button
+            onClick={toggle}
+            className="w-24 h-24 rounded-full bg-orange-500 hover:bg-orange-600 transition-all duration-300 active:scale-95 shadow-2xl text-white text-4xl"
+          >
+
+            {playing ? "⏸" : "▶"}
+
+          </button>
+
+        </div>
+
+        {/* Volume */}
+        <div className="mt-8 flex items-center gap-4">
+
+          <span className="text-white">
+
+            🔊
+
+          </span>
+
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={volume}
+            onChange={(e) =>
+              setVolume(Number(e.target.value))
+            }
+            className="flex-1 accent-orange-500"
+          />
+
+          <span className="text-white text-sm w-8">
+
+            {volume}
+
+          </span>
+
+        </div>
+
+        {/* Action Buttons */}
+<div className="flex gap-4 mt-8">
+
+  <button
+    onClick={shareToWhatsApp}
+    className="flex-1 py-3 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold tracking-wide shadow-xl transition-all duration-300"
   >
-    <path d="M16.04 4C9.39 4 4 9.28 4 15.79c0 2.29.67 4.42 1.82 6.22L4 28l6.18-1.62a12.2 12.2 0 0 0 5.86 1.49C22.69 27.87 28 22.59 28 16.08S22.69 4 16.04 4zm6.92 17.15c-.29.81-1.68 1.55-2.32 1.65-.6.09-1.36.13-2.19-.13-.5-.15-1.15-.37-1.98-.72-3.48-1.47-5.75-4.91-5.92-5.14-.16-.23-1.41-1.84-1.41-3.5 0-1.65.88-2.47 1.19-2.81.31-.34.68-.42.9-.42h.65c.21 0 .5-.08.77.57.29.7.98 2.42 1.06 2.6.09.18.15.39.03.62-.12.23-.18.38-.35.58-.17.2-.36.44-.51.59-.17.17-.34.35-.15.69.18.34.82 1.33 1.76 2.16 1.22 1.08 2.24 1.42 2.57 1.58.34.17.54.14.74-.08.2-.23.87-.99 1.1-1.33.23-.34.46-.28.77-.17.31.11 1.98.92 2.32 1.08.34.17.57.25.65.39.08.13.08.78-.21 1.59z"/>
-  </svg>
+    Share
+  </button>
 
-  <span className="absolute -top-1 -right-1 flex h-4 w-4">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75"></span>
-    <span className="relative inline-flex rounded-full h-4 w-4 bg-green-200"></span>
-  </span>
-</button>
+  <button
+    onClick={openWebsite}
+    className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold tracking-wide shadow-xl transition-all duration-300"
+  >
+    Website
+  </button>
 
-        <audio
-          ref={audioRef}
-          src={STREAM_URL}
-          preload="none"
-          onPlaying={() => setPlaying(true)}
-          onWaiting={() => setBuffering(true)}
-          onPause={() => setPlaying(false)}
-          onError={() => {
-            setPlaying(false);
-            setBuffering(false);
-          }}
-        />
+</div>
+        {buffering && (
+
+          <p className="text-center text-orange-200 text-sm mt-6 animate-pulse">
+
+            Connecting to Radio Cahayu...
+
+          </p>
+
+        )}
+
       </div>
 
-      {/* MARQUEE KEYFRAMES */}
-      <style jsx global>{`
-        @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
+    </div>
+
+    {/* Floating WhatsApp */}
+    <button
+      onClick={openWhatsApp}
+      className="fixed bottom-6 right-6 w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 transition-all shadow-2xl text-white text-3xl flex items-center justify-center z-50"
+    >
+
+      💬
+
+    </button>
+          <audio
+        ref={audioRef}
+        src={STREAM_URL}
+        preload="none"
+        onPlaying={() => {
+          setPlaying(true);
+          setBuffering(false);
+        }}
+        onWaiting={() => setBuffering(true)}
+        onPause={() => setPlaying(false)}
+        onEnded={() => setPlaying(false)}
+        onError={() => {
+          setPlaying(false);
+          setBuffering(false);
+        }}
+      />
+
+    </div>
+
+    <style jsx global>{`
+      @keyframes marquee {
+        0% {
+          transform: translateX(100%);
         }
-      `}</style>
-    </>
+
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.35);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 9999px;
+        background: #f97316;
+        cursor: pointer;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border: 0;
+        border-radius: 9999px;
+        background: #f97316;
+        cursor: pointer;
+      }
+    `}</style>
+</>
   );
 }
